@@ -1,5 +1,24 @@
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::path::PathBuf;
 
-fn main() {
-    let pattern = std::env::args().nth(1).expect("no pattern given");
-    let path = std::env::args().nth(2).expect("no path given");
+use clap::Parser;
+
+#[derive(Parser)]
+struct Cli {
+    pattern: String,
+    path: PathBuf,
+}
+
+fn main() -> std::io::Result<()> {
+    let args = Cli::parse();
+    let file = File::open(&args.path)?;
+    let reader = BufReader::new(file);
+    for line in reader.lines() {
+        let l = line.unwrap();
+        if l.contains(&args.pattern) {
+            println!("{}", l);
+        }
+    }
+    Ok(())
 }
