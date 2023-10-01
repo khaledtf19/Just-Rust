@@ -1,12 +1,13 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
+use std::{fs::File, io::Write};
 
 use anyhow::{Context, Result};
 use clap::Parser;
 
+mod find;
 #[allow(non_snake_case)]
 mod myArgs;
+use find::findInFile;
 use myArgs::{CreateCommand, FindCommand, MyArgs};
 
 #[derive(Parser)]
@@ -22,26 +23,16 @@ fn main() -> Result<()> {
         myArgs::EntryType::Find(FindCommand { pattern, path }) => {
             findInFile(pattern, path)?;
         }
-        myArgs::EntryType::Create(CreateCommand { text }) => {}
+        myArgs::EntryType::Create(CreateCommand { text, path }) => {
+            createFile(text, path)?;
+        }
     }
     Ok(())
 }
 
-fn findInFile(pattern: &String, path: &PathBuf) -> Result<()> {
-    let mut liens: Vec<String> = vec![];
-    let file = File::open(&path)
-        .with_context(|| format!("Could not read file {}", &path.to_str().unwrap()))?;
-    let reader = BufReader::new(file);
-    for line in reader.lines() {
-        let l = line?;
-        if l.contains(pattern) {
-            liens.push(l)
-        }
-    }
-    if liens.len() > 0 {
-        liens.iter().for_each(|x| println!("{},", x))
-    } else {
-        println!("patteren does not match any line in the file")
-    }
+fn createFile(text: &String, path: &PathBuf) -> Result<()> {
+    let mut f = File::create(&path)
+        .with_context(|| format!("Could not create file: {} ", &path.to_str().unwrap()))?;
+    f.write(text.as_bytes())?;
     Ok(())
 }
